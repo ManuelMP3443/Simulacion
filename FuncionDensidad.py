@@ -26,38 +26,52 @@ class FuncionDensidad:
 
         return {1: resultado[1], 0:  resultado[0]}
     
-    def multinomial_exponencial(self,probabilidades, numero_muestras):
-
-        categorias = [f"x{i}" for i in range(len(probabilidades))]
-        trayectoria = []
+    def multinomial_exponencial(self, probabilidades, numero_muestras, n_lanzamientos):
+        """
+        Devuelve una lista de vectores de conteos para cada muestra
+        usando el método de tiempos exponenciales.
+        """
+        k = len(probabilidades)
+        categorias = [f"x{i}" for i in range(k)]
+        resultados = []
 
         for _ in range(numero_muestras):
-            tiempos = []
-            for p in probabilidades:
-                
-                u = random.random()
-                t = -math.log(1 - u) / p
-                tiempos.append(t)
-            
-            indice = tiempos.index(min(tiempos))
-            trayectoria.append(categorias[indice])
+            vector = [0]*k
+            for _ in range(n_lanzamientos):
+                tiempos = []
+                for p in probabilidades:
+                    u = random.random()
+                    t = -math.log(1 - u) / p
+                    tiempos.append(t)
+                indice = tiempos.index(min(tiempos))
+                vector[indice] += 1
+            resultados.append(vector)
 
-        return trayectoria
-    
-    def multinomial(self, probabilidades,numero_muestras):
-        categorias = [f"x{i}" for i in range(len(probabilidades))]
-        trayectoria = []
+        return resultados
 
+    def multinomial(self, probabilidades, numero_muestras, n_lanzamientos):
+        """
+        Devuelve una lista de vectores de conteos para cada muestra
+        usando el método clásico de muestreo acumulativo.
+        """
         total = sum(probabilidades)
         probabilidades = [p/total for p in probabilidades]
+        k = len(probabilidades)
+        categorias = [f"x{i}" for i in range(k)]
+        resultados = []
 
         for _ in range(numero_muestras):
-            r= random.random()
-            acum =0.0 
-            for i, p in enumerate(probabilidades):
-                acum += p
-                if r < acum or i == len(probabilidades)-1:
-                    trayectoria.append(categorias[i])
-                    break
+            vector = [0]*k
+            for _ in range(n_lanzamientos):
+                r = random.random()
+                acum = 0.0
+                for i, p in enumerate(probabilidades):
+                    acum += p
+                    if r < acum or i == k-1:
+                        vector[i] += 1
+                        break
+            resultados.append(vector)
+
+        return resultados
 
         return trayectoria        

@@ -56,23 +56,19 @@ class Graficar:
         ax3d.set_title(f"Distribución: {dist} (3D)", fontsize=14, fontweight='bold')
         self.canvas.draw()
 
-    def graficar_muestra(self, trayectoria, idx):
-        """
-        Dibuja la muestra idx en 2D mostrando la categoría elegida y su conteo (1 por muestra).
-        """
+    def multinomial(self,trayectoria, n_lanzamientos, dist, k):
+        ax = self.fig.add_subplot(111)
 
-        categorias = sorted(set(trayectoria))
-        cat_idx = {c: 0 for c in categorias}  # inicializar conteos en 0
+        ax.clear()
+        for i in range(k):
+            ax.hist(trayectoria[:, i], bins=range(n_lanzamientos+2), alpha=0.5, label=f"x{i}")
+        ax.set_xlabel("Conteo en la muestra")
+        ax.set_ylabel("Frecuencia")
+        ax.set_title(f"Distribución marginal {dist}")
+        ax.legend()
+        self.canvas.draw()
 
-        # Contar solo la muestra seleccionada
-        cat_elegida = trayectoria[idx]
-        cat_idx[cat_elegida] = 1
-
-        ax.bar(cat_idx.keys(), cat_idx.values(), color=['#F26B38', '#2E86AB', '#3CAEA3']*10)
-        ax.set_ylim(0, 1.2)  # altura fija
-        ax.set_title(f"Muestra {idx+1}", fontsize=14, fontweight='bold')
-
-        self.canvas.draw()  
+    
 
 
 
