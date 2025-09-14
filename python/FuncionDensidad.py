@@ -59,7 +59,7 @@ class FuncionDensidad:
     
     def exponencial(self, numero_muestras, lmbda):
         resultado_ptr = self.lib.exponencial(numero_muestras, lmbda)
-        resultado_lista = [resultado_ptr[i] for i in range(numero_muestras)]
+        resultado_lista = [resultado_ptr[i] for i in range(numero_muestras) if np.isfinite(resultado_ptr[i])]
         resultado_dic = {}
 
         for x in resultado_lista:

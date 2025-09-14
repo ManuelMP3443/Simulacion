@@ -122,14 +122,6 @@ if __name__ == '__main__':
     entry5.configure(validate="key", validatecommand=vcmdif)
 
 
-    entry1.bind("<Return>", lambda e: pasar_siguiente(e, entry2))
-    entry2.bind("<Return>", lambda e: graficar())
-    entry3.bind("<Return>", lambda e: graficar())
-    entry4.bind("<Return>", lambda e: pasar_siguiente(e, entry5))
-    entry5.bind("<Return>", lambda e: graficar())
-
-
-
     fig, ax = plt.subplots(figsize=(6,4))
     canvas = FigureCanvasTkAgg(fig, master=frame_grafica)
     canvas.get_tk_widget().pack(fill=BOTH, expand=True)
@@ -217,29 +209,39 @@ if __name__ == '__main__':
             widget.pack_forget()
 
         dist = distribucion.get()
-        entry2.unbind("<Return>")
-        if dist == "Binomial Puntual" or dist == "exponencial":
-            entry2.bind("<Return>", lambda e: graficar()) 
-        else:
-            entry2.bind("<Return>", lambda e: pasar_siguiente(e, entry3))  
 
         if dist == "Binomial":
-            label1.config(text="Theta (prob. éxito):")
-            label2.config(text="Número de ensayos:")
             label3.config(text="Cantidad de muestras:")
-            label1.pack(pady=(5,2)); entry1.pack(fill=X,pady=(0,5))
-            label2.pack(pady=(5,2)); entry2.pack(fill=X,pady=(0,5))
-            label3.pack(pady=(5,2)); entry3.pack(fill=X,pady=(0,5))
-        elif dist == "Binomial Puntual":
+            label2.config(text="Número de ensayos:")
             label1.config(text="Theta (prob. éxito):")
-            label2.config(text="Cantidad de muestras:")
-            label1.pack(pady=(5,2)); entry1.pack(fill=X,pady=(0,5))
+            label3.pack(pady=(5,2)); entry3.pack(fill=X,pady=(0,5))
             label2.pack(pady=(5,2)); entry2.pack(fill=X,pady=(0,5))
+            label1.pack(pady=(5,2)); entry1.pack(fill=X,pady=(0,5))
+           
+
+            entry3.bind("<Return>", lambda e: pasar_siguiente(e,entry2))
+            entry2.bind("<Return>", lambda e: pasar_siguiente(e, entry1))
+            entry1.bind("<Return>", lambda e: graficar())
+            
+            
+        elif dist == "Binomial Puntual":
+            label2.config(text="Cantidad de muestras:")
+            label1.config(text="Theta (prob. éxito):")
+            label2.pack(pady=(5,2)); entry2.pack(fill=X,pady=(0,5))
+            label1.pack(pady=(5,2)); entry1.pack(fill=X,pady=(0,5))
+            
+            entry1.bind("<Return>", lambda e: graficar())
+            entry2.bind("<Return>", lambda e: pasar_siguiente(e,entry1))
+
         elif dist == "exponencial":
-            label1.config(text="lambda:")
             label2.config(text="Cantidad de muestras:")
-            label1.pack(pady=(5,2)); entry1.pack(fill=X,pady=(0,5))
+            label1.config(text="lambda:")
             label2.pack(pady=(5,2)); entry2.pack(fill=X,pady=(0,5))
+            label1.pack(pady=(5,2)); entry1.pack(fill=X,pady=(0,5))
+
+            entry1.bind("<Return>", lambda e: graficar())
+            entry2.bind("<Return>", lambda e: pasar_siguiente(e,entry1))
+
         elif dist == "Normal":
             label1.config(text="Cantidad de Muestras:")
             label4.config(text="Varianza:")
@@ -247,24 +249,37 @@ if __name__ == '__main__':
             label1.pack(pady=(5,2)); entry2.pack(fill=X,pady=(0,5))
             label4.pack(pady=(5,2)); entry4.pack(fill=X,pady=(0,5))
             label5.pack(pady=(5,2)); entry5.pack(fill=X,pady=(0,5))
+
+            entry2.bind("<Return>", lambda e: pasar_siguiente(e,entry4))
+            entry4.bind("<Return>", lambda e: pasar_siguiente(e,entry5))
+            entry5.bind("<Return>", lambda e: graficar())
+
         elif dist in "Gibbs": 
-            label1.config(text="convarianza p:")
             label2.config(text="Cantidad de muestras:")
+            label1.config(text="convarianza p:")
             label4.config(text="X")
             label5.config(text="Y")
 
-            label1.pack(pady=(5,2)); entry1.pack(fill=X,pady=(0,5))
             label2.pack(pady=(5,2)); entry2.pack(fill=X,pady=(0,5))
+            label1.pack(pady=(5,2)); entry1.pack(fill=X,pady=(0,5))
             label4.pack(pady=(5,2)); entry4.pack(fill=X,pady=(0,5))
             label5.pack(pady=(5,2)); entry5.pack(fill=X,pady=(0,5))
         
         elif dist in ["Multinomial"]:
-            label1.config(text="Theta (prob. éxito):")
+            
             label2.config(text="Número de ensayos:")
             label3.config(text="Numero de intentos:")
-            label1.pack(pady=(5,2)); entry1.pack(fill=X,pady=(0,5))
+            label1.config(text="Theta (prob. éxito):")
+
             label2.pack(pady=(5,2)); entry2.pack(fill=X,pady=(0,5))
             label3.pack(pady=(5,2)); entry3.pack(fill=X,pady=(0,5))
+            label1.pack(pady=(5,2)); entry1.pack(fill=X,pady=(0,5))
+            
+
+            entry2.bind("<Return>", lambda e: pasar_siguiente(e,entry3))
+            entry3.bind("<Return>", lambda e: pasar_siguiente(e,entry1))
+            entry1.bind("<Return>", lambda e: graficar())
+
 
     distribucion.bind("<<ComboboxSelected>>", actualizar_parametros)
     actualizar_parametros()
