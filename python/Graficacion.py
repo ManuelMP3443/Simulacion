@@ -3,6 +3,8 @@ from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 import matplotlib.pyplot as plt
 from mpl_toolkits.axes_grid1.inset_locator import inset_axes
 import numpy as np
+from scipy.stats import gaussian_kde
+
 
 class Graficar:
 
@@ -82,44 +84,54 @@ class Graficar:
         ax_main.legend()
 
         self.canvas.draw()
+   
 
-    def gibbs_bivariante_3D(self, x, y, bins=50):
-       """
-       x, y: arrays con las muestras del método de Gibbs
-       bins: cantidad de intervalos en cada eje
-       """
-       self.fig.clf()  # Limpiar figura
-       ax = self.fig.add_subplot(111, projection='3d')
-       # Creamos el histograma 2D normalizado para densidad
-       H, xedges, yedges = np.histogram2d(x, y, bins=bins, density=True)
-       # Creamos la malla de coordenadas
-       X, Y = np.meshgrid(xedges[:-1], yedges[:-1])
-       Z = H.T  # transponemos para que coincida con X,Y
-       # Graficamos la superficie
-       ax.plot_surface(X, Y, Z, cmap='viridis')
-       # Etiquetas
-       ax.set_xlabel("X")
-       ax.set_ylabel("Y")
-       ax.set_zlabel("Densidad")
-       ax.set_title("Muestreo Gibbs - Normal Bivariante")
-       self.canvas.draw()    
-
-    def gibbs_bivariante_2D(self, x, y, bins=50):
-        """
-        Grafica histograma 2D (heatmap) de muestras de Gibbs
-        """
+    def gibbs_bivariante_2D(self, x, y):
         self.fig.clf()
-        ax = self.fig.add_subplot(111)
 
-        # Histograma 2D
-        h = ax.hist2d(x, y, bins=bins, cmap='viridis', density=True)
+        # --- Scatter 2D ---
+        ax2d = self.fig.add_subplot(121)
+        ax2d.scatter(x, y, s=10, c='black', alpha=0.6)
+        ax2d.grid(True, linestyle='--', color='gray', alpha=0.5)
+        ax2d.set_xticks(np.linspace(min(x), max(x), 10))
+        ax2d.set_yticks(np.linspace(min(y), max(y), 10))
+        ax2d.set_xlabel("X")
+        ax2d.set_ylabel("Y")
+        ax2d.set_title("Muestras Gibbs 2D")
 
-        # Colorbar para indicar densidad
-        self.fig.colorbar(h[3], ax=ax)
+        # --- Superficie 3D tipo ola ---
+        ax3d = self.fig.add_subplot(122, projection='3d')
 
-        ax.set_xlabel("X")
-        ax.set_ylabel("Y")
-        ax.set_title("Histograma 2D - Muestreo Gibbs")
+        # Crear malla más pequeña para velocidad
+        X, Y = np.meshgrid(np.linspace(min(x), max(x), 30),
+                           np.linspace(min(y), max(y), 30))
+
+        # KDE 2D para densidad suave
+        values = np.vstack([x, y])
+        kernel = gaussian_kde(values)
+        Z = kernel(np.vstack([X.ravel(), Y.ravel()]))
+        Z = Z.reshape(X.shape)
+
+        # Graficar superficie
+        surf = ax3d.plot_surface(X, Y, Z, cmap='viridis', edgecolor='none',
+                                 rstride=2, cstride=2, alpha=0.8)
+
+        # Bloquear elevación vertical
+        elev_fijo = 15
+        azim_inicial = -60
+        ax3d.view_init(elev=elev_fijo, azim=azim_inicial)
+
+        # Deshabilitar que se cambie elevación al actualizar
+        def fix_elev(event):
+            ax3d.view_init(elev=elev_fijo, azim=ax3d.azim)
+
+        self.canvas.mpl_connect('motion_notify_event', fix_elev)
+
+        # Ejes y títulos
+        ax3d.set_xlabel("X")
+        ax3d.set_ylabel("Y")
+        ax3d.set_zlabel("Densidad")
+        ax3d.set_title("Densidad Gibbs 3D")
 
         self.canvas.draw()
 

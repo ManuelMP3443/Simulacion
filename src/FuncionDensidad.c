@@ -1,7 +1,9 @@
 #include "FuncionDensidad.h"
+#include "tinyexpr.h"
 #include <stdlib.h>
 #include <time.h>
 #include <math.h>
+
 #define PI 3.14159265358979323846
 
 static int semilla = 0;
@@ -109,6 +111,79 @@ int** multinomial(double * probabilidades, int cantidad_muestras, int n_lanzamie
 	return resultado;
 }
 
+// Aceptación-rechazo con M dinámico usando TinyExpr precompilado
+double sample_condicional(te_expr* expr, double* vars_x, double* vars_y, double a, double b, int n_intentos, double M){
+    double x, u;
+
+    for(int i = 0; i < n_intentos; i++){
+        x = a + (b-a)*(double)rand()/RAND_MAX;
+        *vars_x = x;
+        u = ((double)rand()/RAND_MAX) * M; // u en [0,M]
+
+        double fx = te_eval(expr);
+        if(u <= fx) return x;
+    }
+
+    // fallback
+    return a + (b-a)*(double)rand()/RAND_MAX;
+}
+
+// Estimación de M usando TinyExpr precompilado
+double estimate_M(te_expr* expr, double* vars_x, double* vars_y, double a, double b, int n_prelim){
+    double x, max_f = 0.0;
+    for(int i = 0; i < n_prelim; i++){
+        x = a + (b-a)*(double)rand()/RAND_MAX;
+        *vars_x = x;
+
+        double fx = te_eval(expr);
+        if(fx > max_f) max_f = fx;
+    }
+    return max_f * 1.1;
+}
+
+// Gibbs sampling con TinyExpr precompilado
+double** gibbs_sample(char* fxy, double* punto_inicial, int numero_muestras, double* intervalos, int n_prelim, int n_intentos){
+    double x = punto_inicial[0];
+    double y = punto_inicial[1];
+
+    // Variables que apuntan a x e y para TinyExpr
+    double vars_x = x;
+    double vars_y = y;
+    te_variable vars[] = { {"x", &vars_x}, {"y", &vars_y} };
+
+    // Compilar la expresión solo una vez
+    te_expr* expr = te_compile(fxy, vars, 2, NULL);
+    if(!expr) exit(1);
+
+    // Preparar el arreglo de resultados
+    double** resultado = calloc(numero_muestras+1, sizeof(double*));
+    for(int i = 0; i < numero_muestras+1; i++)
+        resultado[i] = calloc(2, sizeof(double));
+
+    resultado[0][0] = x;
+    resultado[0][1] = y;
+
+    // Muestreo Gibbs
+    for(int i = 1; i < numero_muestras+1; i++){
+        // Estimar M para x dado y
+        double Mx = estimate_M(expr, &vars_x, &vars_y, intervalos[0], intervalos[1], n_prelim);
+        x = sample_condicional(expr, &vars_x, &vars_y, intervalos[0], intervalos[1], n_intentos, Mx);
+
+        // Estimar M para y dado x
+        double My = estimate_M(expr, &vars_y, &vars_x, intervalos[0], intervalos[1], n_prelim);
+        y = sample_condicional(expr, &vars_y, &vars_x, intervalos[0], intervalos[1], n_intentos, My);
+
+        resultado[i][0] = x;
+        resultado[i][1] = y;
+    }
+
+    // Liberar expresión
+    te_free(expr);
+
+    return resultado;
+}
+
+
 void free_vector_int(int* ptr){
     free(ptr);
 }
@@ -118,6 +193,14 @@ void free_vector_double(double* ptr){
 }
 
 void free_matriz_int(int** matriz, int cantidad_muestras){
+    if(matriz == NULL) return;
+    for(int j = 0; j < cantidad_muestras; j++){
+        free(matriz[j]);
+    }
+    free(matriz);
+}
+
+void free_matriz_double(double** matriz, int cantidad_muestras){
     if(matriz == NULL) return;
     for(int j = 0; j < cantidad_muestras; j++){
         free(matriz[j]);

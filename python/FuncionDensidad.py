@@ -23,6 +23,9 @@ class FuncionDensidad:
         self.lib.multinomial.argtypes = [ctypes.POINTER(ctypes.c_double), ctypes.c_int, ctypes.c_int]
         self.lib.multinomial.restype = ctypes.POINTER(ctypes.POINTER(ctypes.c_int))
 
+        self.lib.gibbs_sample.argtypes = [ctypes.c_char_p, ctypes.POINTER(ctypes.c_double), ctypes.c_int, ctypes.POINTER(ctypes.c_double), ctypes.c_int, ctypes.c_int]
+        self.lib.gibbs_sample.restype = ctypes.POINTER(ctypes.POINTER(ctypes.c_double))
+
         self.lib.free_vector_int.argtypes = [ctypes.POINTER(ctypes.c_int)]
         self.lib.free_vector_int.restype = None
         
@@ -31,6 +34,11 @@ class FuncionDensidad:
 
         self.lib.free_matriz_int.argtypes = [ctypes.POINTER(ctypes.POINTER(ctypes.c_int)), ctypes.c_int]
         self.lib.free_matriz_int.restype = None
+
+        self.lib.free_matriz_double.argtypes = [ctypes.POINTER(ctypes.POINTER(ctypes.c_double)), ctypes.c_int]
+        self.lib.free_matriz_double.restype = None
+
+        
 
 
     def binomial(self, theta, num_ensayos, cantidad_muestras):
@@ -97,18 +105,37 @@ class FuncionDensidad:
 
         return resultados
 
-    def gibbs_bivariante(self, rho, N, x0, y0):
-        rng = np.random.default_rng(123)  
-        x, y = np.zeros(N), np.zeros(N)   
-        x[0], y[0] = x0, y0               
-        sigma = np.sqrt(1 - rho**2)       
+    def gibbs_sample(self, fxy, punto_inicial, numero_muestras, intervalos, n_intentos=1000, n_prelim=3000):
+        # convertir la función a cadena C
+        fxy_c = ctypes.c_char_p(fxy.encode("utf-8"))
 
-        # Bucle de Gibbs
-        for t in range(1, N):
-            
-            x[t] = rng.normal(rho * y[t-1], sigma)
-            
-            y[t] = rng.normal(rho * x[t], sigma)
+        # preparar el punto inicial
+        n1 = len(punto_inicial)
+        arrpunto = (ctypes.c_double * n1)(*punto_inicial)
 
-        return x, y
+        # preparar los intervalos
+        n2 = len(intervalos)
+        arrintervalo = (ctypes.c_double * n2)(*intervalos)
+
+        # llamada a la librería (OJO: orden correcto de los enteros)
+        resultado_ptr = self.lib.gibbs_sample(
+            fxy_c,
+            arrpunto,
+            numero_muestras,
+            arrintervalo,
+            n_intentos,
+            n_prelim
+        )
+
+        resultados = []
+        for i in range(numero_muestras):
+            # asumiendo que hay 2 columnas (x,y)
+            vector = [resultado_ptr[i][j] for j in range(2)]
+            print(f"{vector}\n")
+            resultados.append(vector)
+
+        # liberar memoria
+        self.lib.free_matriz_double(resultado_ptr, numero_muestras)
+
+        return resultados
 
