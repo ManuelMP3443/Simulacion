@@ -134,7 +134,47 @@ class Graficar:
         ax3d.set_title("Densidad Gibbs 3D")
 
         self.canvas.draw()
-
+    # Asumiendo que esta es una clase que tiene self.fig y self.canvas
+    # y que recibe x, y, y el diccionario de parametros
+    def normal_bivariada(self, x, y, parametros):
+        self.fig.clf()
+    
+        # --- Gráfico de Dispersión 2D ---
+        # ... (tu código para el gráfico 2D va aquí, sin cambios) ...
+        ax2d = self.fig.add_subplot(121)
+        ax2d.scatter(x, y, s=10, c='black', alpha=0.6)
+        # ... (otros parámetros del gráfico 2D) ...
+    
+        # --- Histograma 3D de Frecuencia ---
+        ax3d = self.fig.add_subplot(122, projection='3d')
+        elevacion_fija = 20 # Define la elevación que quieres mantener
+    
+        # Crear el histograma 2D
+        max_range = max(abs(np.array([x, y]).flatten()))
+        hist, xedges, yedges = np.histogram2d(x, y, bins=30, range=[[-max_range, max_range], [-max_range, max_range]])
+        X, Y = np.meshgrid(xedges[:-1] + (xedges[1]-xedges[0])/2,
+                           yedges[:-1] + (yedges[1]-yedges[0])/2)
+    
+        # Graficar la superficie
+        surf = ax3d.plot_surface(X, Y, hist.T, cmap='viridis', edgecolor='none')
+        
+        # Ejes y títulos
+        ax3d.set_xlabel("X")
+        ax3d.set_ylabel("Y")
+        ax3d.set_zlabel("Frecuencia")
+        ax3d.set_title(parametros)
+    
+        # Función que se ejecutará con el evento del mouse
+        def on_move(event):
+            if event.inaxes == ax3d:
+                # Mantener la elevación fija y actualizar solo el acimut
+                ax3d.view_init(elev=elevacion_fija, azim=ax3d.azim)
+                self.canvas.draw_idle()
+    
+        # Conectar el evento de movimiento del mouse a nuestra función
+        self.fig.canvas.mpl_connect('motion_notify_event', on_move)
+    
+        self.canvas.draw()
 
 
 

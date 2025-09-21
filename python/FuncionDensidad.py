@@ -105,7 +105,7 @@ class FuncionDensidad:
 
         return resultados
 
-    def gibbs_sample(self, fxy, punto_inicial, numero_muestras, intervalos, n_intentos=1000, n_prelim=3000):
+    def gibbs_sample(self, fxy, punto_inicial, numero_muestras, intervalos, n_intentos=500, n_prelim=3000):
         # convertir la función a cadena C
         fxy_c = ctypes.c_char_p(fxy.encode("utf-8"))
 
@@ -138,4 +138,17 @@ class FuncionDensidad:
         self.lib.free_matriz_double(resultado_ptr, numero_muestras)
 
         return resultados
+    
+    def normal_bivariada(self, cantidad_muestras, media, desviacion, covarianza):
+        
+        rho = covarianza / (desviacion[0]*desviacion[1])
+        sigma_x, sigma_y = desviacion
+        mu_x, mu_y = media
+        funcion = f"(1 / (2 * pi * {sigma_x} * {sigma_y} * sqrt(1 - {rho}*{rho}))) * exp(-1 / (2 * (1 - {rho}*{rho})) * (((x - {mu_x})*(x - {mu_x}) / ({sigma_x}*{sigma_x})) + ((y - {mu_y})*(y - {mu_y}) / ({sigma_y}*{sigma_y})) - (2 * {rho} * (x - {mu_x}) * (y - {mu_y}) / ({sigma_x} * {sigma_y}))))"
+
+        resultados = self.gibbs_sample(funcion, [mu_x, mu_y] ,cantidad_muestras, [mu_x-(mu_x*3), mu_x + (mu_x*3) ])
+
+        parametros = f"\u03bc_x: {media[0]} \u03bc_y: {media[1]} \u03c3_x: {desviacion[0]} \u03c3_y: {desviacion[1]} \u03c3\u00b2_xy: {covarianza} \u03c1: {rho}"
+
+        return resultados, parametros
 

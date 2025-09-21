@@ -84,9 +84,6 @@ int** multinomial(double * probabilidades, int cantidad_muestras, int n_lanzamie
 		i++;
 	}
 
-	if(fabs(total - 1.0) > 1e-6){
-		return NULL;
-	}
 
 	int** resultado = calloc(cantidad_muestras, sizeof(int*));
 	
@@ -102,8 +99,6 @@ int** multinomial(double * probabilidades, int cantidad_muestras, int n_lanzamie
 					vector[l] += 1;
 					break;
 				}
-
-					
 			}
 		}
 		resultado[j] = vector;
