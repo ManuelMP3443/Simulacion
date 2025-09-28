@@ -26,6 +26,15 @@ class FuncionDensidad:
         self.lib.gibbs_sample.argtypes = [ctypes.c_char_p, ctypes.POINTER(ctypes.c_double), ctypes.c_int, ctypes.POINTER(ctypes.c_double), ctypes.c_int, ctypes.c_int]
         self.lib.gibbs_sample.restype = ctypes.POINTER(ctypes.POINTER(ctypes.c_double))
 
+        self.lib.normal_bivariada.argtypes = [ctypes.POINTER(ctypes.c_double), ctypes.c_int,ctypes.c_double,ctypes.c_double,ctypes.c_double,ctypes.c_double,ctypes.c_double]
+        self.lib.normal_bivariada.restype = ctypes.POINTER(ctypes.POINTER(ctypes.c_double))
+
+        self.lib.triangulo.argtypes = [ctypes.POINTER(ctypes.c_double), ctypes.c_int]
+        self.lib.triangulo.restype = ctypes.POINTER(ctypes.POINTER(ctypes.c_double))
+
+        self.lib.lineal.argtypes = [ctypes.POINTER(ctypes.c_double), ctypes.c_int]
+        self.lib.lineal.restype = ctypes.POINTER(ctypes.POINTER(ctypes.c_double))
+
         self.lib.free_vector_int.argtypes = [ctypes.POINTER(ctypes.c_int)]
         self.lib.free_vector_int.restype = None
         
@@ -140,15 +149,78 @@ class FuncionDensidad:
         return resultados
     
     def normal_bivariada(self, cantidad_muestras, media, desviacion, covarianza):
-        
-        rho = covarianza / (desviacion[0]*desviacion[1])
-        sigma_x, sigma_y = desviacion
         mu_x, mu_y = media
-        funcion = f"(1 / (2 * pi * {sigma_x} * {sigma_y} * sqrt(1 - {rho}*{rho}))) * exp(-1 / (2 * (1 - {rho}*{rho})) * (((x - {mu_x})*(x - {mu_x}) / ({sigma_x}*{sigma_x})) + ((y - {mu_y})*(y - {mu_y}) / ({sigma_y}*{sigma_y})) - (2 * {rho} * (x - {mu_x}) * (y - {mu_y}) / ({sigma_x} * {sigma_y}))))"
+        sigma_x, sigma_y = desviacion
+        rho = covarianza / (sigma_x * sigma_y)
 
-        resultados = self.gibbs_sample(funcion, [mu_x, mu_y] ,cantidad_muestras, [mu_x-(mu_x*3), mu_x + (mu_x*3) ])
+        # Preparar punto inicial como arreglo C
+        punto_inicial = (ctypes.c_double * 2)(mu_x, mu_y)
 
-        parametros = f"\u03bc_x: {media[0]} \u03bc_y: {media[1]} \u03c3_x: {desviacion[0]} \u03c3_y: {desviacion[1]} \u03c3\u00b2_xy: {covarianza} \u03c1: {rho}"
+        # Llamar a la función C
+        resultado_ptr = self.lib.normal_bivariada(
+            punto_inicial,
+            cantidad_muestras,
+            sigma_x,
+            sigma_y,
+            mu_x,
+            mu_y,
+            rho
+        )
 
-        return resultados, parametros
+        # Convertir a numpy array
+        arr = np.zeros((cantidad_muestras + 1, 2))
+        for i in range(cantidad_muestras + 1):
+            arr[i][0] = resultado_ptr[i][0]
+            arr[i][1] = resultado_ptr[i][1]
+
+        # Preparar cadena de parámetros para mostrar
+        parametros = (
+            f"\u03bc_x: {mu_x} \u03bc_y: {mu_y} "
+            f"\u03c3_x: {sigma_x} \u03c3_y: {sigma_y} "
+            f"\u03c3_xy: {covarianza} \u03c1: {rho}"
+        )
+
+        self.lib.free_matriz_double(resultado_ptr, cantidad_muestras)
+
+        return arr, parametros
+    
+    def triangulo(self, cantidad_muestras,punto_inicial):
+
+        punto_inicial_c = (ctypes.c_double * 2)(punto_inicial[0], punto_inicial[1])
+
+        # Llamar a la función C
+        resultado_ptr = self.lib.triangulo(
+            punto_inicial_c,
+            cantidad_muestras
+        )
+
+        arr = np.zeros((cantidad_muestras + 1, 2))
+        for i in range(cantidad_muestras + 1):
+            arr[i][0] = resultado_ptr[i][0]
+            arr[i][1] = resultado_ptr[i][1]
+
+        self.lib.free_matriz_double(resultado_ptr, cantidad_muestras)
+
+        return arr
+    
+    def lineal(self, cantidad_muestras,punto_inicial):
+
+        punto_inicial_c = (ctypes.c_double * 2)(punto_inicial[0], punto_inicial[1])
+
+        # Llamar a la función C
+        resultado_ptr = self.lib.lineal(
+            punto_inicial_c,
+            cantidad_muestras
+        )
+
+        arr = np.zeros((cantidad_muestras + 1, 2))
+        for i in range(cantidad_muestras + 1):
+            arr[i][0] = resultado_ptr[i][0]
+            arr[i][1] = resultado_ptr[i][1]
+
+        self.lib.free_matriz_double(resultado_ptr, cantidad_muestras)
+
+        return arr
+
+
 
