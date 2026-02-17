@@ -6,7 +6,7 @@ Este proyecto es un simulador de distribuciones de probabilidad y algoritmos de 
 
 | Vista Principal (3D) | Configuración MCMC (Expresiones) |
 | :---: | :---: |
-| ![Normal Bivariada o Gibbs](images/Normal-bivariada.png) <br> *Visualización de Normal Bivariada 3D* | ![MCMC Config](images/Petalo.png.png) <br> *Muestreo MCMC evaluando funciones dinámicamente* |
+| ![Normal Bivariada o Gibbs](images/Normal-bivariada.png) <br> *Visualización de Normal Bivariada 3D* | ![MCMC Config](images/Petalo.png) <br> *Muestreo MCMC evaluando funciones dinámicamente* |
 
 | Distribución Multinomial | Exportación de Datos |
 | :---: | :---: |
