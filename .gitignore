@@ -1,0 +1,15 @@
+# Entornos virtuales de Python
+venv/
+
+# Archivos de caché de Python
+__pycache__/
+*.pyc
+
+# Configuraciones del editor de código (VS Code)
+.vscode/
+
+# Archivos comprimidos pesados
+*.zip
+
+# Documentos editables (ya estamos subiendo la versión final en PDF)
+*.docx
