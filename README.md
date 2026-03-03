@@ -40,8 +40,6 @@ Dado que este proyecto combina una interfaz en Python con un motor de cálculo e
 * **Python 3.8+** instalado en tu sistema.
 * **Compilador de C:**
   * **Windows:** GCC (puedes instalarlo a través de [MinGW-w64](https://www.mingw-w64.org/) o MSYS2).
-  * **Linux:** `gcc` y `build-essential` (`sudo apt install build-essential`).
-  * **macOS:** Xcode Command Line Tools (`xcode-select --install`).
 
 ### Paso a paso
 
